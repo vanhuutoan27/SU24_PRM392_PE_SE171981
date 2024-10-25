@@ -2,7 +2,6 @@ package com.example.prm392_pe_su24.view.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
@@ -27,10 +26,11 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
 
     private ListView lvMajorList, lvStudentList;
-    private MajorAdapter majorAdapter;
     private StudentAdapter studentAdapter;
+    private MajorAdapter majorAdapter;
+    private List<Student> studentList;
     private List<Major> majorList;
-    private Button btnAddStudent, btnAddMajor;
+    private Button btnAddStudent, btnAddMajor, btnShowMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         lvStudentList = findViewById(R.id.lvStudentList);
         btnAddStudent = findViewById(R.id.btnAddStudent);
         btnAddMajor = findViewById(R.id.btnAddMajor);
+        btnShowMap = findViewById(R.id.btnShowMap);
 
         getAllMajors();
 
@@ -59,6 +60,30 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        btnShowMap.setOnClickListener(v -> {
+            if (studentList == null || studentList.isEmpty()) {
+                Toast.makeText(MainActivity.this, "Student list is empty or not loaded yet", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Student studentWithId1 = null;
+            for (Student student : studentList) {
+                if (student.getId().equals("1")) {
+                    studentWithId1 = student;
+                    break;
+                }
+            }
+
+            if (studentWithId1 != null) {
+                String studentAddress = studentWithId1.getAddress(); // Lấy địa chỉ của sinh viên
+                Intent intent = new Intent(MainActivity.this, MapActivity.class);
+                intent.putExtra("studentAddress", studentAddress); // Gửi địa chỉ sang MapActivity
+                startActivity(intent);
+            } else {
+                Toast.makeText(MainActivity.this, "Student with ID 1 not found", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -75,8 +100,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Student>> call, Response<List<Student>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<Student> students = response.body();
-                    studentAdapter = new StudentAdapter(MainActivity.this, students, majorList);
+                    studentList = response.body();
+                    studentAdapter = new StudentAdapter(MainActivity.this, studentList, majorList);
                     lvStudentList.setAdapter(studentAdapter);
                     studentAdapter.notifyDataSetChanged();
                 } else {
